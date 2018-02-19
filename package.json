@@ -1,0 +1,43 @@
+{
+  "name": "live-torrent",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "browserify client/loader.js -o client/build.js && node server/slicendice.js"
+  },
+  "keywords": [
+    "webtorrent",
+    "bittorrent",
+    "torrent",
+    "live-feed",
+    "broadcast",
+    "p2p",
+    "hls"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pldubouilh/live-torrent.git"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "author": "pldubouilh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pldubouilh/live-torrent/issues"
+  },
+  "homepage": "https://github.com/pldubouilh/live-torrent#readme",
+  "dependencies": {
+    "browserify": "^16.1.0",
+    "create-torrent": "^3.29.2",
+    "express": "^4.16.2",
+    "fs-extra": "^5.0.0",
+    "m3u8": "0.0.7",
+    "parse-torrent": "^5.8.3",
+    "webtorrent": "^0.98.21"
+  },
+  "devDependencies": {
+    "standard": "^11.0.0"
+  }
+}

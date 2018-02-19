@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>live-torrent demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+
+<body>
+  <p style="font-size: 30px; font-family: Helvetica;">Simple demo for <a href="https://github.com/pldubouilh/live-torrent">live-torrent</a></p>
+  <p style="font-size: 15px; font-family: Helvetica;">Pop the console to get the logs. To simulate p2p, just open another tab in incognito and browse to this very testpage.</p>
+  <video style="width:100%; padding-top: 12px;" id="video"></video>
+</body>
+
+<script src="./build.js"></script>
+<script>
+  var video = document.getElementById('video')
+  video.volume = 0
+  var hls = new Hls()
+  hls.loadSource('manifest.m3u8')
+  hls.attachMedia(video)
+  hls.on(Hls.Events.MANIFEST_PARSED, () => video.play())
+</script>
+</html>
