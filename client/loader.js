@@ -3,7 +3,7 @@ const WebTorrent = require('webtorrent')
 const client = new WebTorrent()
 
 const torrents = [] // {name, magnetURI}
-const announceList = [['wss://tracker.btorrent.xyz']]
+const announceList = [['wss://tracker.openwebtorrent.com']]
 
 console.logColor = (msg, color) => console.log('%c' + msg, `color: ${color}; font-size: 11px;`)
 
