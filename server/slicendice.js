@@ -9,7 +9,7 @@ const extraPath = ''
 const pathChunks = 'feed/'
 const chunkName = 'chunks'
 const manifestName = 'manifest.m3u8'
-const announceList = [['wss://tracker.btorrent.xyz']]
+const announceList = [['wss://tracker.openwebtorrent.com']]
 let targetDuration = 10
 
 let magnets = {}

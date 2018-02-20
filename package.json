@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "browserify client/loader.js -o client/build.js && node server/slicendice.js"
+    "test": "browserify client/loader.js -o client/build.js && node cli.js -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8"
   },
   "keywords": [
     "webtorrent",
@@ -22,6 +22,9 @@
   "engines": {
     "node": ">=8"
   },
+  "bin": {
+    "live-torrent": "./cli.js"
+  },
   "author": "pldubouilh",
   "license": "MIT",
   "bugs": {
@@ -35,7 +38,10 @@
     "fs-extra": "^5.0.0",
     "m3u8": "0.0.7",
     "parse-torrent": "^5.8.3",
-    "webtorrent": "^0.98.21"
+    "request": "^2.83.0",
+    "request-promise-native": "^1.0.5",
+    "webtorrent": "^0.98.21",
+    "yargs": "^11.0.0"
   },
   "devDependencies": {
     "standard": "^11.0.0"
