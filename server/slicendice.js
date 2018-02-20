@@ -9,14 +9,14 @@ const extraPath = ''
 const pathChunks = 'feed/'
 const chunkName = 'chunks'
 const manifestName = 'manifest.m3u8'
+const announceList = [['wss://tracker.btorrent.xyz']]
 let targetDuration = 10
 
+let magnets = {}
 let chunk1 = 0
 let chunk2 = 1
 let chunk3 = 2
 let manifest = ''
-
-const announceList = [['wss://tracker.btorrent.xyz']]
 
 function parseManifest () {
   return new Promise((resolve, reject) => {
@@ -31,11 +31,14 @@ function parseManifest () {
 
 const makeMagnet = file => {
   return new Promise(async (resolve, reject) => {
+    if (magnets[file]) return resolve(magnets[file])
+
     const buffer = await fs.readFile(file)
     buffer.name = file
     createTorrent(buffer, { announceList }, (err, t) => {
       if (err) return console.log(err)
       const magnet = parseTorrent.toMagnetURI(parseTorrent(t))
+      magnets[file] = magnet
       resolve(magnet)
     })
   })
