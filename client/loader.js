@@ -11,7 +11,7 @@ console.logNoisy = (msg, color) => !(new Date().getTime() % 12) && console.logCo
 
 navigator.serviceWorker.register('sw.js').then(() => {
   navigator.serviceWorker.addEventListener('message', msg => {
-    return msg.data.ab ? newSeed(msg.data.url, msg.data.ab) : newTorrent(msg.data.magnets)
+    return msg.data.ab ? newSeed(msg.data.name, msg.data.ab) : newTorrent(msg.data.magnets)
   })
 }).catch(() => console.log('SW registration failure'))
 
@@ -62,8 +62,7 @@ function newTorrent (magnets) {
   })
 }
 
-function newSeed (url, ab) {
-  const name = url.match(/\w+\d+(\.ts)/g)[0]
+function newSeed (name, ab) {
   console.logColor(`+ Server loaded ${name} - seeding content now`, 'cadetblue')
 
   if (isTorrentAdded(name)) {

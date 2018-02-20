@@ -8,24 +8,24 @@ async function msgClient (id, msg) {
   const c = await self.clients.get(id)
   if (!c) return
   const chan = new MessageChannel()
-  if (msg.ab) {
-    c.postMessage(msg, [chan.port2, msg.ab])
-  } else {
-    c.postMessage(msg, [chan.port2])
-  }
+  c.postMessage(msg, msg.ab ? [chan.port2, msg.ab] : [chan.port2])
 }
+
+const chunkName = url => url.match(/\w+\d+(\.ts)/g)[0]
 
 self.addEventListener('message', event => {
   // Data from main thread ! Just store AB on look up table
   const { url, ab } = event.data
-  localCache[location.origin + '/' + url] = ab // TODO: fix location. Use chunkname instead of path
-  console.log('- Received p2p data from main thread data for ' + url)
+  const name = chunkName(url)
+
+  localCache[name] = ab
+  console.log('- Received p2p data from main thread data for ' + name)
 
   // Clean LUT if needed
-  localCacheOrder.push(url)
+  localCacheOrder.push(name)
   if (localCacheOrder.length > 5) {
-    const pastUrl = localCacheOrder.shift()
-    delete localCache[pastUrl]
+    const pastName = localCacheOrder.shift()
+    delete localCache[pastName]
   }
 })
 
@@ -55,14 +55,15 @@ async function loadManifest (req, url, id) {
 
 async function loadChunk (req, url, id) {
   // Request has already been fetched by p2p !
-  if (localCache[url]) {
-    return new Response(localCache[url])
+  const name = chunkName(url)
+  if (localCache[name]) {
+    return new Response(localCache[name])
   }
 
   // If not prefetched, go fetch it. Message the arraybuffer back to main thread for seeding.
   const res = await fetch(req)
   const ab = await res.clone().arrayBuffer()
-  msgClient(id, { url, ab })
+  msgClient(id, { name, ab })
   return res
 }
 
