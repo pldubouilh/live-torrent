@@ -13,7 +13,7 @@ Yes please ! Live demo with sintel at [live.computer](https://live.computer)
 ### Run it yourself
 ```sh
 # Install
-npm i live-torrent
+npm i -g live-torrent
 
 # Start with example live-feed
 live-torrent -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8
