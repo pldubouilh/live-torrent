@@ -5,6 +5,9 @@ const client = new WebTorrent()
 const torrents = [] // {name, magnetURI}
 const announceList = [['wss://tracker.openwebtorrent.com']]
 
+window.p2p = 0
+window.server = 0
+
 console.logColor = (msg, color) => console.log('%c' + msg, `color: ${color}; font-size: 11px;`)
 
 console.logNoisy = (msg, color) => !(new Date().getTime() % 12) && console.logColor(msg, color)
@@ -29,7 +32,7 @@ function isTorrentAdded (input) {
 }
 
 function onUpload (t) {
-  console.logNoisy(` + P2P Upload on ${t.name}`, 'indianred')
+  console.logNoisy(`+ P2P Upload on ${t.name}`, 'indianred')
 }
 
 function onDownload (t) {
@@ -41,7 +44,8 @@ function onDone (t) {
     if (err) return console.log(err)
     console.logColor(`+ P2P over for ${t.files[0].name} - downloaded ${t.downloaded} bytes`, 'forestgreen')
     const ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)
-    navigator.serviceWorker.controller.postMessage({ url: t.files[0].name, ab }, [ab])
+    window.p2p += ab.byteLength
+    navigator.serviceWorker.controller.postMessage({ name: t.files[0].name, ab }, [ab])
   })
 }
 
@@ -64,6 +68,7 @@ function newTorrent (magnets) {
 
 function newSeed (name, ab) {
   console.logColor(`+ Server loaded ${name} - seeding content now`, 'cadetblue')
+  window.server += ab.byteLength
 
   if (isTorrentAdded(name)) {
     const { magnetURI } = torrents.find(t => t.name === name)

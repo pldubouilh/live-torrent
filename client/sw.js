@@ -11,13 +11,11 @@ async function msgClient (id, msg) {
   c.postMessage(msg, msg.ab ? [chan.port2, msg.ab] : [chan.port2])
 }
 
-const chunkName = url => url.match(/\w+\d+(\.ts)/g)[0]
+const chunkName = url => url.match(/\d+(\.ts)/g)[0]
 
 self.addEventListener('message', event => {
   // Data from main thread ! Just store AB on look up table
-  const { url, ab } = event.data
-  const name = chunkName(url)
-
+  const { name, ab } = event.data
   localCache[name] = ab
   console.log('- Received p2p data from main thread data for ' + name)
 
@@ -32,24 +30,23 @@ self.addEventListener('message', event => {
 async function loadManifest (req, url, id) {
   // Download manifest, extract filenames and magnet links
   const reply = await fetch(req)
-  const manifestText = await reply.text()
+  const manifestText = await reply.clone().text()
 
-  if (!manifestText.includes('magnet')) return reply
+  // Just reply manifest if no magnet link, or if manifest unchanged
+  if (manifestText === lastManifest || !manifestText.includes('magnet')) return reply
 
-  const split = manifestText.split('\n')
-  const manifest = split.filter(l => !l.includes('magnet')).join('\n')
-  const magnets = split.filter(l => l.includes('magnet')).map(l => l.replace('###', ''))
+  // Extract magnet
+  const magnets = manifestText.split('\n').filter(l => l.includes('magnet')).map(l => l.replace('###', ''))
 
-  // If unchanged or if no last manifest, just reply to player (instant start)
-  if (manifest === lastManifest || !lastManifest) {
-    lastManifest = manifest
-    return new Response(manifest)
+  // If starting, only downlaod last chunk of manifest (instant server start)
+  if (!lastManifest) {
+    magnets.splice(0, magnets.length - 1)
   }
 
   // Ping main thread with magnet link. Lie to the video player to give WT some time to download new chunk
   msgClient(id, { magnets })
-  const resp = new Response(lastManifest)
-  lastManifest = manifest
+  const resp = new Response(lastManifest || manifestText)
+  lastManifest = manifestText
   return resp
 }
 
@@ -57,6 +54,7 @@ async function loadChunk (req, url, id) {
   // Request has already been fetched by p2p !
   const name = chunkName(url)
   if (localCache[name]) {
+    console.log('- Feeding player with p2p data for ' + name)
     return new Response(localCache[name])
   }
 
