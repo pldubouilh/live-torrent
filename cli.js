@@ -14,10 +14,9 @@ let manifest
 let sequence = 0
 const fileToMagnet = {}
 const magnetsOrder = []
-const entries = []
 
 const help = `
-🛰  Live-torrent 🛰
+🛰 Live-torrent 🛰
   -u   manifest location
   -p   playlist name
   -c   video chunk location                  - default same as url
@@ -26,32 +25,38 @@ const help = `
   eg. live-torrent -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8
 `
 
+const chunkName = url => url.match(/\d+(\.ts)/g)[0]
+
 function die (msg, code) {
   console.log(help + '\n' + msg)
   process.exit(code)
 }
 
-const computeMagnet = (file, fn) => {
-  return new Promise(async (resolve, reject) => {
-    file.name = fn
+function computeMagnet (file, cn) {
+  return new Promise((resolve, reject) => {
+    file.name = cn
     createTorrent(file, { announceList }, (err, t) => {
       if (err) return console.log(err)
       const magnet = parseTorrent.toMagnetURI(parseTorrent(t))
-      resolve(magnet)
+      resolve('###' + magnet)
     })
   })
 }
 
 async function makeMagnet (fn) {
+  // Extract chunk name. Return magnet if already computed
+  const cn = chunkName(fn)
+  if (fileToMagnet[cn]) return fileToMagnet[cn]
+
   // Fetch payload and compute magnet
   const payload = await request(chunksLocation + fn, { encoding: null })
-  const magnet = await computeMagnet(payload, fn)
+  const magnet = await computeMagnet(payload, cn)
 
   // Store magnet computed
-  fileToMagnet[fn] = magnet
-  magnetsOrder.push(fn)
+  fileToMagnet[cn] = magnet
+  magnetsOrder.push(cn)
 
-  if (magnetsOrder.length > 20) {
+  if (magnetsOrder.length > 10) {
     const oldMagnet = magnetsOrder.shift()
     delete fileToMagnet[oldMagnet]
   }
@@ -70,34 +75,23 @@ async function doManifest (path = '') {
     return doManifest(m3u8)
   }
 
-  const split = _manifest.split('\n')
-
-  // Get sequenece number
+  // Split manifest and get sequenece number
+  let split = _manifest.split('\n')
   const _sequence = split.filter(l => l.includes(`#EXT-X-MEDIA-SEQUENCE:`))[0].replace('#EXT-X-MEDIA-SEQUENCE:', '')
   if (_sequence === sequence) {
     return console.log('\nManifest unchanged\n')
   }
 
-  // Split manifest
-  sequence = _sequence
+  // Remove any existing magnet link from manifest (useful for testing)
+  split = split.filter(l => !l.includes('magnet'))
+
+  // Extract TS files and make magnet links
   const files = split.filter(l => l.includes('.ts'))
-  const times = split.filter(l => l.includes('#EXTINF'))
-  const head = split.filter(l => !times.includes(l) && !files.includes(l))
-  const lastFile = files[files.length - 1]
+  await makeAllMagnets(files)
 
-  // Add entries with webtorrent
-  if (!entries.length) {
-    await makeAllMagnets(files)
-    entries.push(`${times[0]}\n###${fileToMagnet[files[0]]}\n${chunksLocation + files[0]}`)
-    entries.push(`${times[1]}\n###${fileToMagnet[files[1]]}\n${chunksLocation + files[1]}`)
-    entries.push(`${times[2]}\n###${fileToMagnet[files[2]]}\n${chunksLocation + files[2]}`)
-  } else {
-    entries.shift()
-    await makeMagnet(lastFile)
-    entries.push(`${times[2]}\n###${fileToMagnet[files[2]]}\n${chunksLocation + files[2]}`)
-  }
-
-  manifest = head.join('\n') + entries.join('\n')
+  // Pop manifest back, inject magnet links alongside TS files
+  manifest = split.map(l => l.includes('.ts') ? fileToMagnet[chunkName(l)] + '\n' + chunksLocation + l : l).join('\n')
+  sequence = _sequence
   console.log(manifest)
 }
 

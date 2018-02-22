@@ -29,7 +29,7 @@ function isTorrentAdded (input) {
 }
 
 function onUpload (t) {
-  console.logNoisy(` + P2P Upload on ${t.name}`, 'indianred')
+  console.logNoisy(`+ P2P Upload on ${t.name}`, 'indianred')
 }
 
 function onDownload (t) {
@@ -41,7 +41,7 @@ function onDone (t) {
     if (err) return console.log(err)
     console.logColor(`+ P2P over for ${t.files[0].name} - downloaded ${t.downloaded} bytes`, 'forestgreen')
     const ab = b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)
-    navigator.serviceWorker.controller.postMessage({ url: t.files[0].name, ab }, [ab])
+    navigator.serviceWorker.controller.postMessage({ name: t.files[0].name, ab }, [ab])
   })
 }
 
