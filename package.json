@@ -6,7 +6,9 @@
   "scripts": {
     "start": "browserify client/loader.js -o client/build.js && node cli.js -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8",
     "lint": "standard .",
-    "test": "concurrently -s first --kill-others \"npm run start &>/dev/null\" \"sleep 5 && node tests/test.js\""
+    "startTest": "npm run start 2&>/dev/null &",
+    "stopTest": "kill `lsof -ti tcp:8008`",
+    "test": "npm run startTest && sleep 5 && node tests/test.js && npm run stopTest"
   },
   "keywords": [
     "webtorrent",
