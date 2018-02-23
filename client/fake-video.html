@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>live-torrent demo</title>
+</head>
+
+<body> <h1>Tests</h1> </body>
+
+<script src="./build.js"></script>
+<script>
+  const chunksDone = {}
+
+  const dlManifest = async () => {
+    const m = await fetch('manifest.m3u8')
+    const t = await m.text()
+    const last = t.split('\n').filter(l => l.includes('http://'))[2]
+    if (chunksDone[last]) return
+    chunksDone[last] = true
+    fetch(last)
+  }
+
+  dlManifest()
+  setInterval(dlManifest, 2000)
+</script>
+</html>

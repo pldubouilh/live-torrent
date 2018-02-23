@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "browserify client/loader.js -o client/build.js && node cli.js -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8"
+    "start": "browserify client/loader.js -o client/build.js && node cli.js -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8",
+    "lint": "standard .",
+    "test": "concurrently -s first --kill-others \"npm run start &>/dev/null\" \"sleep 5 && node tests/test.js\""
   },
   "keywords": [
     "webtorrent",
@@ -44,6 +46,9 @@
     "yargs": "^11.0.0"
   },
   "devDependencies": {
-    "standard": "^11.0.0"
+    "concurrently": "^3.5.1",
+    "puppeteer": "^1.1.0",
+    "standard": "^11.0.0",
+    "tape": "^4.9.0"
   }
 }
