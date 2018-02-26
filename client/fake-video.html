@@ -15,13 +15,13 @@
   const dlManifest = async () => {
     const m = await fetch('manifest.m3u8')
     const t = await m.text()
-    const last = t.split('\n').filter(l => l.includes('http://'))[2]
-    if (chunksDone[last]) return
+    const last = t.split('\n').filter(l => l.endsWith('.ts'))[2]
+    if (chunksDone[last] || !last) return
     chunksDone[last] = true
     fetch(last)
   }
 
   dlManifest()
-  setInterval(dlManifest, 2000)
+  setInterval(dlManifest, 4000)
 </script>
 </html>

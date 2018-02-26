@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "browserify client/loader.js -o client/build.js && node cli.js -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8",
-    "lint": "standard .",
-    "startTest": "npm run start 2&>/dev/null &",
+    "build": "browserify client/loader.js -o client/build.js",
+    "cliRemote": "npm run build && node cli.js -v -u https://live.computer -p manifest.m3u8",
+    "cliLocal": "npm run build && node cli.js -v -f feed",
+    "startTest": "node cli.js -u https://live.computer -p manifest.m3u8 &",
     "stopTest": "kill `lsof -ti tcp:8008`",
+    "lint": "standard .",
     "test": "npm run startTest && sleep 5 && node tests/test.js && npm run stopTest"
   },
   "keywords": [
@@ -40,7 +42,7 @@
     "create-torrent": "^3.29.2",
     "express": "^4.16.2",
     "fs-extra": "^5.0.0",
-    "m3u8": "0.0.7",
+    "get-video-duration": "^0.2.0",
     "parse-torrent": "^5.8.3",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
@@ -48,7 +50,6 @@
     "yargs": "^11.0.0"
   },
   "devDependencies": {
-    "concurrently": "^3.5.1",
     "puppeteer": "^1.1.0",
     "standard": "^11.0.0",
     "tape": "^4.9.0"
