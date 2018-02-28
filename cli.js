@@ -1,115 +1,85 @@
 #!/usr/bin/env node
-const parseTorrent = require('parse-torrent')
-const createTorrent = require('create-torrent')
-const request = require('request-promise-native')
+const WtManifest = require('./lib/wtManifest')
 const argv = require('yargs').argv
 const express = require('express')
 const app = express()
 
-let playlistLocation = ''
-let playlistName = ''
-let chunksLocation = ''
-const announceList = [['wss://tracker.openwebtorrent.com']]
-let manifest
-let sequence = 0
-const fileToMagnet = {}
-const magnetsOrder = []
+console.verbose = m => argv.v && (console.log('\x1Bc') || console.log(m))
 
-const help = `
-🛰 Live-torrent 🛰
+const help = `🛰 Live-torrent 🛰
+
+# To convert an existing stream to a live-torrent feed
   -u   manifest location
   -p   playlist name
-  -c   video chunk location                  - default same as url
-  -r   manifest refresh rate (in seconds)    - default 5
+  -c   video chunk location                  - default same as -u
 
-  eg. live-torrent -u http://wms.shared.streamshow.it/carinatv/carinatv/ -p playlist.m3u8
+# To create a stream from a folder with HLS chunks
+  -f   folder with chunks location
+  -l   start from beggining and loop         - default false
+
+# Misc
+  -s   add simple testpage to server         - default true
+  -v   display manifest when generated       - default false
+  -r   manifest refresh rate (in seconds)    - default 2
+
+
+eg. from existing feed
+  live-torrent -v -u https://live.computer -p manifest.m3u8
+
+eg. from local folder with ts files
+  live-torrent -v -l -f feed/
 `
 
-const chunkName = url => url.match(/\d+(\.ts)/g)[0]
-
 function die (msg, code) {
-  console.log(help + '\n' + msg)
+  console.log(msg.error ? msg.error : '\n' + msg)
   process.exit(code)
 }
 
-function computeMagnet (file, cn) {
-  return new Promise((resolve, reject) => {
-    file.name = cn
-    createTorrent(file, { announceList }, (err, t) => {
-      if (err) return console.log(err)
-      const magnet = parseTorrent.toMagnetURI(parseTorrent(t))
-      resolve('###' + magnet)
-    })
+if (argv.h || argv.help || !((argv.p && argv.u) || argv.f)) {
+  die(help, 0)
+}
+
+console.log('\nStarting server on port 8008\n')
+const sampleWebserver = typeof argv.s === 'undefined' ? true : (argv.s === 'true')
+const delay = parseInt(argv.r || 10)
+
+const manifestLocation = argv.u
+const playlistName = argv.p
+const chunksLocation = argv.c || argv.u
+
+const makeFromFolder = argv.f
+const loop = !!argv.l
+
+const wtm = new WtManifest(chunksLocation, manifestLocation, playlistName, makeFromFolder, delay, loop)
+
+app.get('*.m3u8', (req, res) => res.send(wtm.manifest))
+
+if (sampleWebserver) app.use(express.static('client'))
+
+if (makeFromFolder) {
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+    next()
   })
+  app.use(express.static(makeFromFolder))
 }
 
-async function makeMagnet (fn) {
-  // Extract chunk name. Return magnet if already computed
-  const cn = chunkName(fn)
-  if (fileToMagnet[cn]) return fileToMagnet[cn]
+const makeManifest = async (cb) => {
+  try {
+    await wtm.doManifest()
+  } catch (e) { die(e, 1) }
 
-  // Fetch payload and compute magnet
-  const payload = await request(chunksLocation + fn, { encoding: null })
-  const magnet = await computeMagnet(payload, cn)
-
-  // Store magnet computed
-  fileToMagnet[cn] = magnet
-  magnetsOrder.push(cn)
-
-  if (magnetsOrder.length > 10) {
-    const oldMagnet = magnetsOrder.shift()
-    delete fileToMagnet[oldMagnet]
-  }
-}
-
-async function makeAllMagnets (files) {
-  return Promise.all(files.map(makeMagnet))
-}
-
-async function doManifest (path = '') {
-  const _manifest = await request(playlistLocation + (path || playlistName))
-
-  // Head over to the playlist, if what we got was a link to a playlist
-  if (_manifest.includes('.m3u8')) {
-    const m3u8 = _manifest.split('\n').find(l => l.includes('.m3u8'))
-    return doManifest(m3u8)
+  if (!app.started) {
+    app.started = true
+    app.listen(8008)
   }
 
-  // Split manifest and get sequenece number
-  let split = _manifest.split('\n')
-  const _sequence = split.filter(l => l.includes(`#EXT-X-MEDIA-SEQUENCE:`))[0].replace('#EXT-X-MEDIA-SEQUENCE:', '')
-  if (_sequence === sequence) {
-    return console.log('\nManifest unchanged\n')
-  }
-
-  // Remove any existing magnet link from manifest (useful for testing)
-  split = split.filter(l => !l.includes('magnet'))
-
-  // Extract TS files and make magnet links
-  const files = split.filter(l => l.includes('.ts'))
-  await makeAllMagnets(files)
-
-  // Pop manifest back, inject magnet links alongside TS files
-  manifest = split.map(l => l.includes('.ts') ? fileToMagnet[chunkName(l)] + '\n' + chunksLocation + l : l).join('\n')
-  sequence = _sequence
-  console.log(manifest)
+  console.verbose(`
+  ${sampleWebserver ? '### Sample client fileserver running on http://127.0.0.1:8008' : ''}
+  ### Manifest at: http://127.0.0.1:8008/manifest.m3u8
+  ### Manifest generated on: ${new Date()}\n\n${wtm.manifest}`)
 }
 
-if (argv.h || argv.help) {
-  die('', 0)
-}
-
-if (argv.u && argv.p) {
-  console.log('Starting server\n')
-  app.get('*.m3u8', (req, res) => res.send(manifest))
-  app.use(express.static('client'))
-  app.listen(8008)
-
-  chunksLocation = argv.c || argv.u
-  playlistLocation = argv.u
-  playlistName = argv.p
-  doManifest()
-  setInterval(doManifest, (argv.r || 5) * 1000)
-} else {
-  die('', 0)
-}
+makeManifest()
+setInterval(makeManifest, delay * 1000)
