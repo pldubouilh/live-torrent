@@ -41,6 +41,7 @@ if (argv.h || argv.help || !((argv.p && argv.u) || argv.f)) {
 
 console.log('\nStarting server on port 8008\n')
 const sampleWebserver = typeof argv.s === 'undefined' ? true : (argv.s === 'true')
+const delay = parseInt(argv.r || 10)
 
 const manifestLocation = argv.u
 const playlistName = argv.p
@@ -49,7 +50,7 @@ const chunksLocation = argv.c || argv.u
 const makeFromFolder = argv.f
 const loop = !!argv.l
 
-const wtm = new WtManifest(chunksLocation, manifestLocation, playlistName, makeFromFolder, loop)
+const wtm = new WtManifest(chunksLocation, manifestLocation, playlistName, makeFromFolder, delay, loop)
 
 app.get('*.m3u8', (req, res) => res.send(wtm.manifest))
 
@@ -81,4 +82,4 @@ const makeManifest = async (cb) => {
 }
 
 makeManifest()
-setInterval(makeManifest, (argv.r || 10) * 1000)
+setInterval(makeManifest, delay * 1000)

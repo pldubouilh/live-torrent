@@ -34,7 +34,9 @@ live-torrent can convert your feed into a webtorrent enabled feed. The first exa
 
 > I want to create a feed !
 
-No problem - the second example up here will generate a feed for the directory `feed`, how simple ! Have a look in the [feed directory](https://github.com/pldubouilh/live-torrent/tree/master/feed) for instructions on how to generate a sample feed from a mp4 file.
+No problem - the second example up here will generate a feed for the directory `feed`, how simple ! New chunks added to the directory will be pushed to the manifest.
+
+Have a look in the [feed directory](https://github.com/pldubouilh/live-torrent/tree/master/feed) for instructions on how to generate a sample feed from a mp4 file.
 
 > How to implement on a website ?
 
