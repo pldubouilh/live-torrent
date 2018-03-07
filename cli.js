@@ -10,21 +10,19 @@ const help = `🛰 Live-torrent 🛰
 
 # To convert an existing stream to a live-torrent feed
   -u   manifest location
-  -p   playlist name
-  -c   video chunk location                  - default same as -u
 
 # To create a stream from a folder with HLS chunks
   -f   folder with chunks location
-  -l   start from beggining and loop         - default false
+  -l   start from beggining and loop     - default false
 
 # Misc
-  -s   add simple testpage to server         - default true
-  -v   display manifest when generated       - default false
-  -r   manifest refresh rate (in seconds)    - default 2
+  -s   add simple testpage to server     - default true
+  -v   display manifest when generated   - default false
+  -r   manifest refresh rate (in sec.)   - default 2
 
 
 eg. from existing feed
-  live-torrent -v -u https://live.computer -p manifest.m3u8
+  live-torrent -v -u https://live.computer/manifest.m3u8
 
 eg. from local folder with ts files
   live-torrent -v -l -f feed/
@@ -35,7 +33,7 @@ function die (msg, code) {
   process.exit(code)
 }
 
-if (argv.h || argv.help || !((argv.p && argv.u) || argv.f)) {
+if (argv.h || argv.help || !(argv.u || argv.f)) {
   die(help, 0)
 }
 
@@ -44,26 +42,22 @@ const sampleWebserver = typeof argv.s === 'undefined' ? true : (argv.s === 'true
 const delay = parseInt(argv.r || 10)
 
 const manifestLocation = argv.u
-const playlistName = argv.p
-const chunksLocation = argv.c || argv.u
-
 const makeFromFolder = argv.f
 const loop = !!argv.l
 
-const wtm = new WtManifest(chunksLocation, manifestLocation, playlistName, makeFromFolder, delay, loop)
+const wtm = new WtManifest(manifestLocation, makeFromFolder, delay, loop)
+
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+  next()
+})
 
 app.get('*.m3u8', (req, res) => res.send(wtm.manifest))
 
 if (sampleWebserver) app.use(express.static('client'))
 
-if (makeFromFolder) {
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*')
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
-    next()
-  })
-  app.use(express.static(makeFromFolder))
-}
+if (makeFromFolder) app.use(express.static(makeFromFolder))
 
 const makeManifest = async (cb) => {
   try {

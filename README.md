@@ -18,8 +18,8 @@ Yes please ! Live demo with sintel at [live.computer](https://live.computer)
 # Install
 npm i -g live-torrent
 
-# Start with example live-feed. Manifest fetched from https://live.computer/manifest.m3u8
-live-torrent -v -u https://live.computer -p manifest.m3u8
+# Start with example live-feed
+live-torrent -v -u https://live.computer/manifest.m3u8
 
 # ... or Create a Webtorrent enabled feed from a folder with .ts files
 live-torrent -v -l -f feed
@@ -41,6 +41,10 @@ Have a look in the [feed directory](https://github.com/pldubouilh/live-torrent/t
 > How to implement on a website ?
 
 Just host the script, serviceworker and videoplayer on your site and you're good to go. Also, there are some limitations to the use of SW ; the site hosting the videoplayer needs to be served from HTTPS, and serviceworker should be located at the root of the domain (e.g. `https://live.computer/sw.js`). Also feel free to open an issue if something's acting weird :)
+
+> Do I need CORS ?
+
+Yes ! [But it's easy to enable](https://enable-cors.org/server.html). It's enabled by default using the "create from a folder" option.
 
 ### How is it working ?
 TLDR(ish); A server script parses the video manifest and generates torrent magnet links from the video chunks. The magnets are pushed on the manifest.
