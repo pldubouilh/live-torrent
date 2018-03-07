@@ -1,13 +1,13 @@
 {
   "name": "live-torrent",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "browserify client/loader.js -o client/build.js",
-    "cliRemote": "npm run build && node cli.js -v -u https://live.computer -p manifest.m3u8",
-    "cliLocal": "npm run build && node cli.js -v -f feed",
-    "startTest": "node cli.js -u https://live.computer -p manifest.m3u8 &",
+    "cliRemote": "npm run build && node cli.js -v -u https://live.computer/manifest.m3u8",
+    "cliLocal": "npm run build && node cli.js -v -l -f feed",
+    "startTest": "node cli.js -u https://live.computer/manifest.m3u8 &",
     "stopTest": "kill `lsof -ti tcp:8008`",
     "lint": "standard .",
     "test": "npm run startTest && sleep 5 && node tests/test.js && npm run stopTest"

@@ -11,14 +11,18 @@
 <script src="./build.js"></script>
 <script>
   const chunksDone = {}
+  const manifestName = 'manifest.m3u8'
+  const manifestURL = 'http://127.0.0.1:8008/'
+  const chunksLocation = 'https://live.computer/'
 
   const dlManifest = async () => {
-    const m = await fetch('manifest.m3u8')
+    const m = await fetch(manifestURL + manifestName)
     const t = await m.text()
-    const last = t.split('\n').filter(l => l.endsWith('.ts'))[2]
-    if (chunksDone[last] || !last) return
+    const chunks = t.split('\n').filter(l => l.endsWith('.ts'))
+    const last = chunks[2] || chunks[0]
+    if (chunksDone[last]) return
     chunksDone[last] = true
-    fetch(last)
+    fetch(chunksLocation + last)
   }
 
   dlManifest()
