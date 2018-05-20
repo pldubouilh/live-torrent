@@ -28,6 +28,8 @@
   window.onload = () => {
     const video = document.getElementById('video')
     video.volume = 0
+    video.muted = true
+    video.autoplay = true
     const hls = new Hls()
     hls.loadSource('manifest.m3u8')
     hls.attachMedia(video)
